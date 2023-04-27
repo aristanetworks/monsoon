@@ -1,0 +1,24 @@
+#!ipxe
+
+console -x 1920 -y 1080 --depth 32
+
+dhcp || goto fail
+
+:init
+
+# Normalize architecture names
+set arch ${buildarch}
+iseq ${arch} arm64 && set arch aarch64 ||
+
+# Strip whitespace and null characters from some DHCP fields
+# Not doing so leaves %00 in the URL, which breaks chainloading.
+set domain ${domain}
+set hostname ${hostname}
+
+chain http://${gateway}:8080/ipxe?mac=${mac:hexhyp}&domain=${domain:uristring}&hostname=${hostname:uristring}&ip=${ip:ipv4}&arch=${arch:uristring} || goto fail
+echo iPXE chainloading returned. This is abnormal, and a bug in the chain of iPXE scripts.
+
+:fail
+echo iPXE chainloading failed, retrying...
+sleep 5
+goto init
