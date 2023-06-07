@@ -8,7 +8,7 @@ locals {
   ]
   args = [
     "initrd=flatcar_production_pxe_image.cpio.gz",
-    "flatcar.config.url=${var.matchbox_http_endpoint}/ignition?uuid=$${uuid}&mac=$${mac:hexhyp}",
+    "flatcar.config.url=${var.matchbox_http_endpoint}/ignition?$${extra_selectors}mac=$${mac:hexhyp}",
     "flatcar.first_boot=yes",
   ]
 
@@ -53,6 +53,7 @@ data "ct_config" "install" {
     os_version         = var.os_version
     ignition_endpoint  = format("%s/ignition", var.matchbox_http_endpoint)
     mac                = concat(var.controllers.*.mac, var.workers.*.mac)[count.index]
+    extra_selectors    = (length(var.controllers[count.index].extra_selectors) > 0) ? join("", [for key, value in var.controllers[count.index].extra_selectors : "${urlencode(key)}=${urlencode(value)}&"]) : ""
     install_disk       = var.install_disk
     ssh_authorized_key = var.ssh_authorized_key
     oem_type           = var.oem_type
@@ -68,8 +69,9 @@ resource "matchbox_group" "controller" {
   name    = format("%s-%s", var.cluster_name, var.controllers[count.index].name)
   profile = matchbox_profile.controllers[count.index].name
   selector = {
-    mac = var.controllers[count.index].mac
-    os  = "installed"
+    mac             = var.controllers[count.index].mac
+    os              = "installed"
+    extra_selectors = (length(var.controllers[count.index].extra_selectors) > 0) ? join("", [for key, value in var.controllers[count.index].extra_selectors : "${urlencode(key)}=${urlencode(value)}&"]) : ""
   }
 }
 
@@ -86,7 +88,7 @@ data "ct_config" "controllers" {
   content = templatefile("${path.module}/butane/controller.yaml", {
     domain_name            = var.controllers.*.domain[count.index]
     etcd_name              = var.controllers.*.name[count.index]
-    etcd_initial_cluster   = join(",", formatlist("%s=https://%s:2380", var.controllers.*.name, var.controllers.*.domain))
+    etcd_initial_cluster   = join("", formatlist("%s=https://%s:2380", var.controllers.*.name, var.controllers.*.domain))
     cluster_dns_service_ip = module.bootstrap.cluster_dns_service_ip
     cluster_domain_suffix  = var.cluster_domain_suffix
     ssh_authorized_key     = var.ssh_authorized_key

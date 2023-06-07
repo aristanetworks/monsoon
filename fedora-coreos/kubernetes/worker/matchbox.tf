@@ -8,7 +8,7 @@ locals {
     "initrd=main",
     "coreos.live.rootfs_url=https://builds.coreos.fedoraproject.org/prod/streams/${var.os_stream}/builds/${var.os_version}/x86_64/fedora-coreos-${var.os_version}-live-rootfs.x86_64.img",
     "coreos.inst.install_dev=${var.install_disk}",
-    "coreos.inst.ignition_url=${var.matchbox_http_endpoint}/ignition?uuid=$${uuid}&mac=$${mac:hexhyp}",
+    "coreos.inst.ignition_url=${var.matchbox_http_endpoint}/ignition?$${extra_selectors}mac=$${mac:hexhyp}",
   ]
 
   cached_kernel = "/assets/fedora-coreos/fedora-coreos-${var.os_version}-live-kernel-x86_64"
@@ -20,7 +20,7 @@ locals {
     "initrd=main",
     "coreos.live.rootfs_url=${var.matchbox_http_endpoint}/assets/fedora-coreos/fedora-coreos-${var.os_version}-live-rootfs.x86_64.img",
     "coreos.inst.install_dev=${var.install_disk}",
-    "coreos.inst.ignition_url=${var.matchbox_http_endpoint}/ignition?uuid=$${uuid}&mac=$${mac:hexhyp}",
+    "coreos.inst.ignition_url=${var.matchbox_http_endpoint}/ignition?$${extra_selectors}mac=$${mac:hexhyp}",
   ]
 
   kernel = var.cached_install ? local.cached_kernel : local.remote_kernel
@@ -33,7 +33,8 @@ resource "matchbox_group" "worker" {
   name    = format("%s-%s", var.cluster_name, var.name)
   profile = matchbox_profile.worker.name
   selector = {
-    mac = var.mac
+    mac             = var.mac
+    extra_selectors = var.extra_selectors
   }
 }
 

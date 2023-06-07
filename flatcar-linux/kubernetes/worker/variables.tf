@@ -104,6 +104,12 @@ variable "oem_type" {
   description = "An OEM type to install with flatcar-install."
 }
 
+variable "extra_selectors" {
+  type        = string
+  description = "Additional identifying fields"
+  default     = ""
+}
+
 # unofficial, undocumented, unsupported
 
 variable "service_cidr" {

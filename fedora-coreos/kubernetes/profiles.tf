@@ -8,7 +8,7 @@ locals {
     "initrd=main",
     "coreos.live.rootfs_url=https://builds.coreos.fedoraproject.org/prod/streams/${var.os_stream}/builds/${var.os_version}/x86_64/fedora-coreos-${var.os_version}-live-rootfs.x86_64.img",
     "coreos.inst.install_dev=${var.install_disk}",
-    "coreos.inst.ignition_url=${var.matchbox_http_endpoint}/ignition?uuid=$${uuid}&mac=$${mac:hexhyp}",
+    "coreos.inst.ignition_url=${var.matchbox_http_endpoint}/ignition?$${extra_selectors}mac=$${mac:hexhyp}",
   ]
 
   cached_kernel = "/assets/fedora-coreos/fedora-coreos-${var.os_version}-live-kernel-x86_64"
@@ -20,7 +20,7 @@ locals {
     "initrd=main",
     "coreos.live.rootfs_url=${var.matchbox_http_endpoint}/assets/fedora-coreos/fedora-coreos-${var.os_version}-live-rootfs.x86_64.img",
     "coreos.inst.install_dev=${var.install_disk}",
-    "coreos.inst.ignition_url=${var.matchbox_http_endpoint}/ignition?uuid=$${uuid}&mac=$${mac:hexhyp}",
+    "coreos.inst.ignition_url=${var.matchbox_http_endpoint}/ignition?$${extra_selectors}mac=$${mac:hexhyp}",
   ]
 
   kernel = var.cached_install ? local.cached_kernel : local.remote_kernel
@@ -35,7 +35,8 @@ resource "matchbox_group" "controller" {
   profile = matchbox_profile.controllers.*.name[count.index]
 
   selector = {
-    mac = var.controllers.*.mac[count.index]
+    mac             = var.controllers.*.mac[count.index]
+    extra_selectors = (length(var.controllers[count.index].extra_selectors) > 0) ? join("", [for key, value in var.controllers[count.index].extra_selectors : "${urlencode(key)}=${urlencode(value)}&"]) : ""
   }
 }
 
@@ -57,7 +58,7 @@ data "ct_config" "controllers" {
   content = templatefile("${path.module}/butane/controller.yaml", {
     domain_name            = var.controllers.*.domain[count.index]
     etcd_name              = var.controllers.*.name[count.index]
-    etcd_initial_cluster   = join(",", formatlist("%s=https://%s:2380", var.controllers.*.name, var.controllers.*.domain))
+    etcd_initial_cluster   = join("", formatlist("%s=https://%s:2380", var.controllers.*.name, var.controllers.*.domain))
     cluster_dns_service_ip = module.bootstrap.cluster_dns_service_ip
     cluster_domain_suffix  = var.cluster_domain_suffix
     ssh_authorized_key     = var.ssh_authorized_key
