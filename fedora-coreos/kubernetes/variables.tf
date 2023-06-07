@@ -30,27 +30,29 @@ variable "os_version" {
 
 variable "controllers" {
   type = list(object({
-    name   = string
-    mac    = string
-    domain = string
+    name             = string
+    mac              = string
+    domain           = string
+    cpu_architecture = optional(string, "x86_64")
   }))
   description = <<EOD
 List of controller machine details (unique name, identifying MAC address, FQDN)
-[{ name = "node1", mac = "52:54:00:a1:9c:ae", domain = "node1.example.com"}]
+[{ name = "node1", mac = "52:54:00:a1:9c:ae", domain = "node1.example.com", cpu_architecture="x86_64"}]
 EOD
 }
 
 variable "workers" {
   type = list(object({
-    name   = string
-    mac    = string
-    domain = string
+    name             = string
+    mac              = string
+    domain           = string
+    cpu_architecture = optional(string, "x86_64")
   }))
   description = <<EOD
 List of worker machine details (unique name, identifying MAC address, FQDN)
 [
-  { name = "node2", mac = "52:54:00:b2:2f:86", domain = "node2.example.com"},
-  { name = "node3", mac = "52:54:00:c3:61:77", domain = "node3.example.com"}
+  { name = "node2", mac = "52:54:00:b2:2f:86", domain = "node2.example.com", cpu_architecture="x86_64"},
+  { name = "node3", mac = "52:54:00:c3:61:77", domain = "node3.example.com", cpu_architecture="aarch64"}
 ]
 EOD
   default     = []

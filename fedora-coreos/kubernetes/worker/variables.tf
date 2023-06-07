@@ -73,6 +73,12 @@ variable "node_taints" {
   default     = []
 }
 
+variable "cpu_architecture" {
+  type        = string
+  description = "CPU architecture (x86_64, arm64, s390x...) needed"
+  default     = "x86_64"
+}
+
 # optional
 
 variable "cached_install" {
