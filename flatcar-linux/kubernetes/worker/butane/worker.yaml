@@ -21,6 +21,10 @@ systemd:
         [Unit]
         Description=Wait for DNS entries
         Wants=systemd-resolved.service
+      %{ if ! enable_install }
+        After=persist.mount
+        Requires=persist.mount
+      %{endif}
         Before=kubelet.service
         [Service]
         Type=oneshot
@@ -29,6 +33,7 @@ systemd:
         [Install]
         RequiredBy=kubelet.service
     - name: kubelet.service
+      enabled: true
       contents: |
         [Unit]
         Description=Kubelet
@@ -84,8 +89,42 @@ systemd:
         RestartSec=5
         [Install]
         WantedBy=multi-user.target
-
+    %{ if ! enable_install }
+    - name: update-engine.service
+      mask: true
+    - name: initialize_data.service
+      enabled: true
+      contents: |
+        [Unit]
+        Description= A service used to prepare the SSH host keys on the persistent partition
+        Before=sshd.service docker.service
+        [Service]
+        Type= oneshot
+        ExecStart=/opt/initialize_disk
+        RemainAfterExit= false
+        [Install]
+        WantedBy=multi-user.target
+%{ endif }
 storage:
+  %{if ! enable_install}
+  disks:
+    - device: ${persist_disk}
+      wipe_table: false
+      partitions:
+        - number: 1
+          label: persist
+          size_mib: 4096
+          start_mib: 0
+          wipe_partition_entry: false
+          should_exist: true
+  filesystems:
+    - device: /dev/disk/by-partlabel/persist
+      path: /persist
+      format: ext4
+      label: persist
+      wipe_filesystem: false
+      with_mount_unit: true
+%{endif}
   directories:
     - path: /etc/kubernetes
       mode: 0755
@@ -95,7 +134,7 @@ storage:
       contents:
         inline:
           ${domain_name}
-    - path: /etc/kubernetes/kubelet.yaml
+    - path: /opt/bootstrap/kubelet.yaml
       mode: 0644
       contents:
         inline: |
@@ -132,6 +171,87 @@ storage:
       contents:
         inline: |
           fs.inotify.max_user_watches=16184
+    - path: /opt/layout
+      mode: 0544
+      contents:
+        inline: |
+          #!/bin/sh -eu
+          mkdir -p /${etc}/kubernetes
+          if [ ! -f "/${etc}/kubernetes/kubeconfig" ] ; then
+            while [ ! -f "/home/core/kubeconfig" ]; do
+                sleep 1
+              echo "Waiting for SSH file providing to finish"
+            done
+            mv /home/core/kubeconfig /${etc}/kubernetes/kubeconfig ;
+            mv /opt/bootstrap/kubelet.yaml /${etc}/kubernetes/kubelet.yaml
+          fi
+    %{ if ! enable_install }
+    - path: /opt/initialize_disk
+      mode: 0544
+      contents:
+        inline: |
+          #!/bin/sh -eu
+          if [ ! -d /${etc}/sshd-config/ ] ;
+          then
+            echo "Generating SSH keys"
+            mkdir -p /${etc}/sshd-config ;
+            ssh-keygen -q -t rsa -f /${etc}/sshd-config/ssh_host_rsa_key -C "core@localhost" -N "" ;
+            ssh-keygen -q -t dsa -f /${etc}/sshd-config/ssh_host_dsa_key -C "core@localhost" -N "" ;
+            ssh-keygen -q -t ecdsa -f /${etc}/sshd-config/ssh_host_ecdsa_key -C "core@localhost" -N "" ;
+            ssh-keygen -q -t ed25519 -f /${etc}/sshd-config/ssh_host_ed25519_key -C "core@localhost" -N "" ;
+            chmod 744  -R /${etc}/sshd-config
+            chmod 755 /${etc}/sshd-config/ssh_host_rsa_key.pub
+            chmod 755 /${etc}/sshd-config/ssh_host_dsa_key.pub
+            chmod 755 /${etc}/sshd-config/ssh_host_ecdsa_key.pub
+            chmod 755 /${etc}/sshd-config/ssh_host_ed25519_key.pub
+            chmod 600 /${etc}/sshd-config/ssh_host_rsa_key
+            chmod 600 /${etc}/sshd-config/ssh_host_dsa_key
+            chmod 600 /${etc}/sshd-config/ssh_host_ecdsa_key
+            chmod 600 /${etc}/sshd-config/ssh_host_ed25519_key
+            echo "Finished generating SSH keys"
+          fi
+          # replaces the empty kubernetes folder with a symlink to our persistent folder
+          echo "Prepare layout"
+          mkdir -p /${etc}/kubernetes
+          echo "Creating symbolic links"
+          rm -rf /etc/kubernetes
+          ln -s /${etc}/kubernetes /etc/kubernetes
+    - path: /etc/ssh/sshd_config.d/host_key_config.conf
+      mode: 0444
+      contents:
+        inline: |
+          HostKey /${etc}/sshd-config/ssh_host_rsa_key
+          HostKey /${etc}/sshd-config/ssh_host_dsa_key
+          HostKey /${etc}/sshd-config/ssh_host_ecdsa_key
+          HostKey /${etc}/sshd-config/ssh_host_ed25519_key
+    - path: /etc/ssh/sshd_config
+      mode: 0444
+      contents:
+        inline: |
+          # Use most defaults for sshd configuration.
+          UsePrivilegeSeparation sandbox
+          Subsystem sftp internal-sftp
+          ClientAliveInterval 180
+          UseDNS no
+          UsePAM yes
+          # handled by PAM
+          PrintLastLog no
+          # handled by PAM
+          PrintMotd no
+          Ciphers chacha20-poly1305@openssh.com,aes128-ctr,aes192-ctr,aes256-ctr,aes128-gcm@openssh.com,aes256-gcm@openssh.com
+          MACs hmac-sha2-256-etm@openssh.com,hmac-sha2-512-etm@openssh.com,hmac-sha2-256,hmac-sha2-512,umac-128-etm@openssh.com,umac-128@openssh.com
+          KexAlgorithms curve25519-sha256,curve25519-sha256@libssh.org,ecdh-sha2-nistp256,ecdh-sha2-nistp384,ecdh-sha2-nistp521,diffie-hellman-group-exchange-sha256,diffie-hellman-group16-sha512,diffie-hellman-group18-sha512,diffie-hellman-group14-sha256
+
+          # Temporarily accept ssh-rsa algorithm for openssh >= 8.8,
+          # until most ssh clients could deprecate ssh-rsa.
+          HostkeyAlgorithms +ssh-rsa
+          PubkeyAcceptedAlgorithms +ssh-rsa
+          Include /etc/ssh/sshd_config.d/*.conf
+
+          PermitRootLogin no
+          PasswordAuthentication no
+          ChallengeResponseAuthentication no
+%{ endif }
 passwd:
   users:
     - name: core

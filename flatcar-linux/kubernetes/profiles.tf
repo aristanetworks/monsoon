@@ -36,12 +36,11 @@ resource "matchbox_group" "install" {
 resource "matchbox_profile" "install" {
   count = length(var.controllers)
 
-  name   = format("%s-install-%s", var.cluster_name, var.controllers.*.name[count.index])
-  kernel = local.kernel
-  initrd = local.initrd
-  args   = concat(local.args, var.kernel_args)
-
-  raw_ignition = data.ct_config.install[count.index].rendered
+  name         = var.enable_install ? format("%s-install-%s", var.cluster_name, var.controllers.*.name[count.index]) : format("%s-controller-%s", var.cluster_name, var.controllers.*.name[count.index])
+  raw_ignition = var.enable_install ? data.ct_config.install[count.index].rendered : data.ct_config.controllers.*.rendered[count.index]
+  kernel       = local.kernel
+  initrd       = local.initrd
+  args         = concat(local.args, var.kernel_args)
 }
 
 # Flatcar Linux install
@@ -86,10 +85,15 @@ data "ct_config" "controllers" {
   content = templatefile("${path.module}/butane/controller.yaml", {
     domain_name            = var.controllers.*.domain[count.index]
     etcd_name              = var.controllers.*.name[count.index]
+    persist_disk           = var.controllers.*.persist_disk[count.index]
     etcd_initial_cluster   = join(",", formatlist("%s=https://%s:2380", var.controllers.*.name, var.controllers.*.domain))
     cluster_dns_service_ip = module.bootstrap.cluster_dns_service_ip
     cluster_domain_suffix  = var.cluster_domain_suffix
     ssh_authorized_key     = var.ssh_authorized_key
+    enable_install         = var.enable_install
+    etc                    = var.enable_install ? "etc" : "persist/etc"
+    opt                    = var.enable_install ? "opt" : "persist/opt"
+    var                    = var.enable_install ? "var" : "persist/var"
   })
   strict   = true
   snippets = lookup(var.snippets, var.controllers.*.name[count.index], [])
