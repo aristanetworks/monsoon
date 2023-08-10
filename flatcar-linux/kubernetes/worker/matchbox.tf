@@ -1,10 +1,11 @@
 locals {
   # flatcar-stable -> stable channel
-  channel = split("-", var.os_channel)[1]
+  channel          = split("-", var.os_channel)[1]
+  cpu_architecture = (var.cpu_architecture == "x86_64") ? "amd64" : "arm64"
 
-  remote_kernel = "${var.download_protocol}://${local.channel}.release.flatcar-linux.net/amd64-usr/${var.os_version}/flatcar_production_pxe.vmlinuz"
+  remote_kernel = "${var.download_protocol}://${local.channel}.release.flatcar-linux.net/${local.cpu_architecture}-usr/${var.os_version}/flatcar_production_pxe.vmlinuz"
   remote_initrd = [
-    "${var.download_protocol}://${local.channel}.release.flatcar-linux.net/amd64-usr/${var.os_version}/flatcar_production_pxe_image.cpio.gz",
+    "${var.download_protocol}://${local.channel}.release.flatcar-linux.net/${local.cpu_architecture}-usr/${var.os_version}/flatcar_production_pxe_image.cpio.gz",
   ]
   args = flatten([
     "initrd=flatcar_production_pxe_image.cpio.gz",
@@ -13,9 +14,9 @@ locals {
     var.kernel_args,
   ])
 
-  cached_kernel = "/assets/flatcar/${var.os_version}/flatcar_production_pxe.vmlinuz"
+  cached_kernel = "/assets/flatcar/${local.cpu_architecture}/${var.os_version}/flatcar_production_pxe.vmlinuz"
   cached_initrd = [
-    "/assets/flatcar/${var.os_version}/flatcar_production_pxe_image.cpio.gz",
+    "/assets/flatcar/${local.cpu_architecture}/${var.os_version}/flatcar_production_pxe_image.cpio.gz",
   ]
 
   kernel = var.cached_install ? local.cached_kernel : local.remote_kernel
@@ -46,6 +47,7 @@ data "ct_config" "install" {
   content = templatefile("${path.module}/butane/install.yaml", {
     os_channel         = local.channel
     os_version         = var.os_version
+    cpu_architecture   = local.cpu_architecture
     ignition_endpoint  = format("%s/ignition", var.matchbox_http_endpoint)
     mac                = var.mac
     install_disk       = var.install_disk

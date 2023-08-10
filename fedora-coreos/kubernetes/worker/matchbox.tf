@@ -1,24 +1,24 @@
 locals {
-  remote_kernel = "https://builds.coreos.fedoraproject.org/prod/streams/${var.os_stream}/builds/${var.os_version}/x86_64/fedora-coreos-${var.os_version}-live-kernel-x86_64"
+  remote_kernel = "https://builds.coreos.fedoraproject.org/prod/streams/${var.os_stream}/builds/${var.os_version}/${var.cpu_architecture}/fedora-coreos-${var.os_version}-live-kernel-${var.cpu_architecture}"
   remote_initrd = [
-    "--name main https://builds.coreos.fedoraproject.org/prod/streams/${var.os_stream}/builds/${var.os_version}/x86_64/fedora-coreos-${var.os_version}-live-initramfs.x86_64.img",
+    "--name main https://builds.coreos.fedoraproject.org/prod/streams/${var.os_stream}/builds/${var.os_version}/${var.cpu_architecture}/fedora-coreos-${var.os_version}-live-initramfs.${var.cpu_architecture}.img",
   ]
 
   remote_args = [
     "initrd=main",
-    "coreos.live.rootfs_url=https://builds.coreos.fedoraproject.org/prod/streams/${var.os_stream}/builds/${var.os_version}/x86_64/fedora-coreos-${var.os_version}-live-rootfs.x86_64.img",
+    "coreos.live.rootfs_url=https://builds.coreos.fedoraproject.org/prod/streams/${var.os_stream}/builds/${var.os_version}/${var.cpu_architecture}/fedora-coreos-${var.os_version}-live-rootfs.${var.cpu_architecture}.img",
     "coreos.inst.install_dev=${var.install_disk}",
     "coreos.inst.ignition_url=${var.matchbox_http_endpoint}/ignition?uuid=$${uuid}&mac=$${mac:hexhyp}",
   ]
 
-  cached_kernel = "/assets/fedora-coreos/fedora-coreos-${var.os_version}-live-kernel-x86_64"
+  cached_kernel = "/assets/fedora-coreos/fedora-coreos-${var.os_version}-live-kernel-${var.cpu_architecture}"
   cached_initrd = [
-    "/assets/fedora-coreos/fedora-coreos-${var.os_version}-live-initramfs.x86_64.img",
+    "/assets/fedora-coreos/fedora-coreos-${var.os_version}-live-initramfs.${var.cpu_architecture}.img",
   ]
 
   cached_args = [
     "initrd=main",
-    "coreos.live.rootfs_url=${var.matchbox_http_endpoint}/assets/fedora-coreos/fedora-coreos-${var.os_version}-live-rootfs.x86_64.img",
+    "coreos.live.rootfs_url=${var.matchbox_http_endpoint}/assets/fedora-coreos/fedora-coreos-${var.os_version}-live-rootfs.${var.cpu_architecture}.img",
     "coreos.inst.install_dev=${var.install_disk}",
     "coreos.inst.ignition_url=${var.matchbox_http_endpoint}/ignition?uuid=$${uuid}&mac=$${mac:hexhyp}",
   ]

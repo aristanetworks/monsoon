@@ -42,6 +42,11 @@ variable "domain" {
   description = "Fully qualified domain name (e.g. node1.example.com)"
 }
 
+variable "cpu_architecture" {
+  type        = string
+  description = ""
+}
+
 # configuration
 
 variable "kubeconfig" {

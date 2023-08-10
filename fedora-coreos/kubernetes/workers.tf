@@ -10,9 +10,10 @@ module "workers" {
   os_version             = var.os_version
 
   # machine
-  name   = var.workers[count.index].name
-  mac    = var.workers[count.index].mac
-  domain = var.workers[count.index].domain
+  name             = var.workers[count.index].name
+  mac              = var.workers[count.index].mac
+  domain           = var.workers[count.index].domain
+  cpu_architecture = var.workers[count.index].cpu_architecture
 
   # configuration
   kubeconfig            = module.bootstrap.kubeconfig-kubelet
