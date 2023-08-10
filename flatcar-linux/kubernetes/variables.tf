@@ -29,27 +29,29 @@ variable "os_version" {
 
 variable "controllers" {
   type = list(object({
-    name   = string
-    mac    = string
-    domain = string
+    name            = string
+    mac             = string
+    domain          = string
+    extra_selectors = optional(map(string), {})
   }))
   description = <<EOD
-List of controller machine details (unique name, identifying MAC address, FQDN)
-[{ name = "node1", mac = "52:54:00:a1:9c:ae", domain = "node1.example.com"}]
+List of controller machine details (unique name, identifying MAC address, FQDN, other fields used to identify the machine)
+[{ name = "node1", mac = "52:54:00:a1:9c:ae", domain = "node1.example.com", {"uuid":"123e4567-e89b-12d3-a456-426614174000"}}]
 EOD
 }
 
 variable "workers" {
   type = list(object({
-    name   = string
-    mac    = string
-    domain = string
+    name            = string
+    mac             = string
+    domain          = string
+    extra_selectors = optional(map(string), {})
   }))
   description = <<EOD
 List of worker machine details (unique name, identifying MAC address, FQDN)
 [
-  { name = "node2", mac = "52:54:00:b2:2f:86", domain = "node2.example.com"},
-  { name = "node3", mac = "52:54:00:c3:61:77", domain = "node3.example.com"}
+  { name = "node2", mac = "52:54:00:b2:2f:86", domain = "node2.example.com", {"uuid":"123e4567-e89b-12d3-a456-426614174001"}},
+  { name = "node3", mac = "52:54:00:c3:61:77", domain = "node3.example.com", {"uuid":"123e4567-e89b-12d3-a456-426614174002"}}
 ]
 EOD
   default     = []
@@ -165,6 +167,12 @@ E.g., `flatcar_production_vmware_raw_image.bin.bz2` leads to `vmware_raw`.
 See: https://www.flatcar.org/docs/latest/installing/bare-metal/installing-to-disk/#choose-a-channel
 EOD
   default     = ""
+}
+
+variable "extra_selectors" {
+  type        = map(string)
+  description = "Additional identifying fields"
+  default     = {}
 }
 
 # unofficial, undocumented, unsupported

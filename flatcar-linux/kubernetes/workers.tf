@@ -10,8 +10,9 @@ module "workers" {
   os_version             = var.os_version
 
   # machine
-  name   = var.workers[count.index].name
-  mac    = var.workers[count.index].mac
+  name            = var.workers[count.index].name
+  mac             = var.workers[count.index].mac
+  extra_selectors = (length(var.workers[count.index].extra_selectors) > 0) ? join("", [for key, value in var.workers[count.index].extra_selectors : "${urlencode(key)}=${urlencode(value)}&"]) : ""
   domain = var.workers[count.index].domain
 
   # configuration

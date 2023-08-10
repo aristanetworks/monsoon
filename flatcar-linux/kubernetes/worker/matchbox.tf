@@ -8,7 +8,7 @@ locals {
   ]
   args = flatten([
     "initrd=flatcar_production_pxe_image.cpio.gz",
-    "flatcar.config.url=${var.matchbox_http_endpoint}/ignition?uuid=$${uuid}&mac=$${mac:hexhyp}",
+    "flatcar.config.url=${var.matchbox_http_endpoint}/ignition?$${extra_selectors}mac=$${mac:hexhyp}",
     "flatcar.first_boot=yes",
     var.kernel_args,
   ])
@@ -22,7 +22,7 @@ locals {
   initrd = var.cached_install ? local.cached_initrd : local.remote_initrd
 }
 
-# Match machine to an install profile by MAC
+# Match machine to an install profile by MAC and extra selectors if there are any
 resource "matchbox_group" "install" {
   name    = format("install-%s", var.name)
   profile = matchbox_profile.install.name
@@ -48,6 +48,7 @@ data "ct_config" "install" {
     os_version         = var.os_version
     ignition_endpoint  = format("%s/ignition", var.matchbox_http_endpoint)
     mac                = var.mac
+    extra_selectors    = var.extra_selectors
     install_disk       = var.install_disk
     ssh_authorized_key = var.ssh_authorized_key
     oem_type           = var.oem_type
@@ -62,8 +63,9 @@ resource "matchbox_group" "worker" {
   name    = format("%s-%s", var.cluster_name, var.name)
   profile = matchbox_profile.worker.name
   selector = {
-    mac = var.mac
-    os  = "installed"
+    mac             = var.mac
+    extra_selectors = var.extra_selectors
+    os              = "installed"
   }
 }
 
