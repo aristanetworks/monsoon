@@ -53,7 +53,7 @@ data "ct_config" "install" {
     os_version         = var.os_version
     ignition_endpoint  = format("%s/ignition", var.matchbox_http_endpoint)
     mac                = concat(var.controllers.*.mac, var.workers.*.mac)[count.index]
-    install_disk       = var.install_disk
+    install_disk       = var.controllers[count.index].install_disk
     ssh_authorized_key = var.ssh_authorized_key
     oem_type           = var.oem_type
     # only cached profile adds -b baseurl

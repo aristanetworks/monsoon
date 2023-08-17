@@ -30,9 +30,10 @@ variable "os_version" {
 
 variable "controllers" {
   type = list(object({
-    name   = string
-    mac    = string
-    domain = string
+    name         = string
+    mac          = string
+    domain       = string
+    install_disk = optional(string, "sda")
   }))
   description = <<EOD
 List of controller machine details (unique name, identifying MAC address, FQDN)
@@ -42,9 +43,10 @@ EOD
 
 variable "workers" {
   type = list(object({
-    name   = string
-    mac    = string
-    domain = string
+    name         = string
+    mac          = string
+    domain       = string
+    install_disk = optional(string, "sda")
   }))
   description = <<EOD
 List of worker machine details (unique name, identifying MAC address, FQDN)
@@ -125,12 +127,6 @@ variable "cached_install" {
   type        = bool
   description = "Whether Fedora CoreOS should PXE boot and install from matchbox /assets cache. Note that the admin must have downloaded the os_version into matchbox assets."
   default     = false
-}
-
-variable "install_disk" {
-  type        = string
-  description = "Disk device to install Fedora CoreOS (e.g. sda)"
-  default     = "sda"
 }
 
 variable "kernel_args" {
