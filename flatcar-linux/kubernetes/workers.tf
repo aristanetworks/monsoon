@@ -26,7 +26,7 @@ module "workers" {
   # optional
   download_protocol = var.download_protocol
   cached_install    = var.cached_install
-  install_disk      = var.install_disk
+  install_disk      = var.workers[count.index].install_disk
   kernel_args       = var.kernel_args
   oem_type          = var.oem_type
 }
