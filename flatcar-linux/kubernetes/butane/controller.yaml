@@ -226,24 +226,24 @@ storage:
           chmod -R 500 /${etc}/ssl/etcd
           chmod -R 700 /${var}/lib/etcd
           chown -R etcd:etcd /${etc}/ssl/etcd
-          if [ ! -f "/${etc}/kubernetes/kubeconfig" ] ; then
-            while [ ! -f "/home/core/kubeconfig" ] ; do
-                sleep 1
-              echo "Waiting for SSH file provisioning to finish"
-            done
-            mv /home/core/kubeconfig /${etc}/kubernetes/kubeconfig ;
-            mv /opt/bootstrap/kubelet.yaml /${etc}/kubernetes/kubelet.yaml
-          fi
-          awk '/#####/ {filename=$2; next} {print > filename}' /home/core/assets
-          mv /home/core/tls/etcd/{peer*,server*} /${etc}/ssl/etcd/etcd/
-          mv /home/core/tls/etcd/etcd-client* /${etc}/kubernetes/pki/
-          mv /home/core/auth/* /${etc}/kubernetes/pki/
-          mv /home/core/tls/k8s/* /${etc}/kubernetes/pki/
-          mv /home/core/static-manifests/* /${etc}/kubernetes/manifests/
-          mv /home/core/manifests /${opt}/bootstrap/assets/manifests
-          mv /home/core/manifests-networking/* /${opt}/bootstrap/assets/manifests
-          rm -rf assets auth kubernetes manifests-networking static-manifests tls
+          while [ ! -f "/home/core/kubeconfig" ] ; do
+              sleep 1
+            echo "Waiting for SSH file provisioning to finish"
+          done
+          cp /home/core/kubeconfig /${etc}/kubernetes/kubeconfig ;
+          cp /opt/bootstrap/kubelet.yaml /${etc}/kubernetes/kubelet.yaml
+          rm -rf /opt/bootstrap/kubelet.yaml
           rm -f /home/core/kubeconfig
+
+          awk '/#####/ {filename=$2; next} {print > filename}' /home/core/assets
+          cp /home/core/tls/etcd/{peer*,server*} /${etc}/ssl/etcd/etcd/
+          cp /home/core/tls/etcd/etcd-client* /${etc}/kubernetes/pki/
+          cp /home/core/auth/* /${etc}/kubernetes/pki/
+          cp /home/core/tls/k8s/* /${etc}/kubernetes/pki/
+          cp /home/core/static-manifests/* /${etc}/kubernetes/manifests/
+          cp -r /home/core/manifests /${opt}/bootstrap/assets/manifests
+          cp /home/core/manifests-networking/* /${opt}/bootstrap/assets/manifests
+          rm -rf assets auth kubernetes manifests-networking static-manifests tls manifests
     - path: /opt/bootstrap/apply
       mode: 0544
       contents:

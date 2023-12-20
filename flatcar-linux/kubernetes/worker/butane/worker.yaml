@@ -177,15 +177,15 @@ storage:
         inline: |
           #!/bin/sh -eu
           mkdir -p /${etc}/kubernetes
-          if [ ! -f "/${etc}/kubernetes/kubeconfig" ] ; then
-            while [ ! -f "/home/core/kubeconfig" ]; do
-                sleep 1
-              echo "Waiting for SSH file providing to finish"
-            done
-            mv /home/core/kubeconfig /${etc}/kubernetes/kubeconfig ;
-            mv /opt/bootstrap/kubelet.yaml /${etc}/kubernetes/kubelet.yaml
-          fi
-    %{ if ! enable_install }
+          while [ ! -f "/home/core/kubeconfig" ]; do
+              sleep 1
+            echo "Waiting for SSH file providing to finish"
+          done
+          cp /home/core/kubeconfig /${etc}/kubernetes/kubeconfig ;
+          cp /opt/bootstrap/kubelet.yaml /${etc}/kubernetes/kubelet.yaml
+          rm /home/core/kubeconfig
+          rm /opt/bootstrap/kubelet.yaml
+  %{ if ! enable_install }
     - path: /opt/initialize_disk
       mode: 0544
       contents:
