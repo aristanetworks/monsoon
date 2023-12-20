@@ -29,21 +29,26 @@ variable "os_version" {
 
 variable "controllers" {
   type = list(object({
-    name   = string
-    mac    = string
-    domain = string
+    name         = string
+    mac          = string
+    domain       = string
+    persist_disk = optional(string, "/dev/sda")
   }))
   description = <<EOD
-List of controller machine details (unique name, identifying MAC address, FQDN)
+List of controller machine details (unique name, identifying MAC address, FQDN) and the
+disk on which a persistent partition should be installed if we live-boot Typhoon.
+If no disk is selected for a persistent partition, we will search for the 
+smallest disk and create this persistent partition on it.
 [{ name = "node1", mac = "52:54:00:a1:9c:ae", domain = "node1.example.com"}]
 EOD
 }
 
 variable "workers" {
   type = list(object({
-    name   = string
-    mac    = string
-    domain = string
+    name         = string
+    mac          = string
+    domain       = string
+    persist_disk = optional(string, "/dev/sda")
   }))
   description = <<EOD
 List of worker machine details (unique name, identifying MAC address, FQDN)
@@ -153,6 +158,12 @@ variable "enable_reporting" {
 variable "enable_aggregation" {
   type        = bool
   description = "Enable the Kubernetes Aggregation Layer"
+  default     = true
+}
+
+variable "enable_install" {
+  type        = bool
+  description = "Enable installing Typhoon on disk"
   default     = true
 }
 

@@ -21,7 +21,9 @@ resource "null_resource" "copy-worker-secrets" {
 
   provisioner "remote-exec" {
     inline = [
-      "sudo mv /home/core/kubeconfig /etc/kubernetes/kubeconfig",
+      "sudo /opt/layout",
     ]
   }
+
+
 }

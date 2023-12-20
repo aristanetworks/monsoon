@@ -104,6 +104,18 @@ variable "oem_type" {
   description = "An OEM type to install with flatcar-install."
 }
 
+variable "enable_install" {
+  type        = bool
+  description = "Enable live booting on Typhoon"
+  default     = true
+}
+
+variable "persist_disk" {
+  type        = string
+  description = ""
+  default     = "/dev/sda"
+}
+
 # unofficial, undocumented, unsupported
 
 variable "service_cidr" {

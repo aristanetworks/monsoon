@@ -33,12 +33,12 @@ resource "matchbox_group" "install" {
 
 // Flatcar Linux install profile (from release.flatcar-linux.net)
 resource "matchbox_profile" "install" {
-  name   = format("%s-install-%s", var.cluster_name, var.name)
+  name   = var.enable_install ? format("%s-install-%s", var.cluster_name, var.name) : format("%s-worker-%s", var.cluster_name, var.name)
   kernel = local.kernel
   initrd = local.initrd
   args   = concat(local.args, var.kernel_args)
 
-  raw_ignition = data.ct_config.install.rendered
+  raw_ignition = var.enable_install ? data.ct_config.install.rendered : data.ct_config.worker.rendered
 }
 
 # Flatcar Linux install
@@ -82,6 +82,10 @@ data "ct_config" "worker" {
     cluster_domain_suffix  = var.cluster_domain_suffix
     node_labels            = join(",", var.node_labels)
     node_taints            = join(",", var.node_taints)
+    enable_install         = var.enable_install
+    persist_disk           = var.persist_disk
+    etc                    = var.enable_install ? "etc" : "persist/etc"
+    opt                    = var.enable_install ? "opt" : "persist/etc"
   })
   strict   = true
   snippets = var.snippets

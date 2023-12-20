@@ -29,5 +29,7 @@ module "workers" {
   install_disk      = var.install_disk
   kernel_args       = var.kernel_args
   oem_type          = var.oem_type
+  enable_install    = var.enable_install
+  persist_disk      = var.workers[count.index].persist_disk
 }
 
